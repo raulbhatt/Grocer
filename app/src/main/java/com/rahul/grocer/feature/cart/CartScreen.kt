@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.rahul.grocer.data.CartRepository
-import com.rahul.grocer.data.OrderRepository
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.rahul.grocer.data.WishlistRepository
 import com.rahul.grocer.model.CartItem
 import com.rahul.grocer.model.Product
@@ -46,10 +46,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun CartScreen() {
+fun CartScreen(
+    viewModel: CartViewModel = hiltViewModel()
+) {
     val cartItems by CartRepository.cartItems.collectAsState()
     val appliedPromoCode by CartRepository.appliedPromoCode.collectAsState()
-    val pastOrders by OrderRepository.pastOrders.collectAsState()
+    val pastOrders by viewModel.pastOrders.collectAsState()
     val cartTotals by CartRepository.cartTotals.collectAsState()
     
     var isCheckingOut by remember { mutableStateOf(false) }
@@ -144,7 +146,7 @@ fun CartScreen() {
                 isCheckingOut = true
                 scope.launch {
                     // Simulate order placement after animation
-                    OrderRepository.placeOrder(cartItems, total)
+                    viewModel.placeOrder(cartItems, total)
                     CartRepository.clearCart()
                     delay(1000) // Wait for lift off animation
                     isCheckingOut = false // Reset UI to original position

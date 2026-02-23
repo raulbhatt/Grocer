@@ -28,32 +28,24 @@ import androidx.compose.ui.unit.dp
 import com.rahul.grocer.ui.theme.DeepSpaceBlue
 import com.rahul.grocer.ui.theme.NebulaPurple
 import com.rahul.grocer.ui.theme.StarlightSilver
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.rahul.grocer.R
 
 @Composable
 fun CoolLoader(
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "loader_transition")
+    LottieLoader(modifier = modifier)
+}
 
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "loader_rotation"
-    )
-
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 1.2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "loader_scale"
-    )
+@Composable
+fun LottieLoader(
+    modifier: Modifier = Modifier
+) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie_loading))
 
     Box(
         modifier = modifier
@@ -68,16 +60,11 @@ fun CoolLoader(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Reusing OrbitLogo but adding extra rotation and scale for the loading effect
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .scale(scale)
-                    .rotate(rotation),
-                contentAlignment = Alignment.Center
-            ) {
-                OrbitLogo(size = 100.dp, isAnimated = false) // Use static logo inside, we animate the container
-            }
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(200.dp)
+            )
             
             Spacer(modifier = Modifier.height(24.dp))
             

@@ -21,6 +21,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        buildConfigField("String", "BASE_URL", "\"https://69325b00e5a9e342d26ec44e.mockapi.io/api/v1/\"")
     }
 
     buildTypes {
@@ -41,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,6 +71,19 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+    
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging)
+    implementation(libs.lottie.compose)
+
+    implementation(libs.play.services.wallet)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

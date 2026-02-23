@@ -1,5 +1,6 @@
 package com.rahul.grocer.feature.profile
 
+import OrderHistoryCard
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -30,10 +31,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.filled.ShoppingCart
+import com.rahul.grocer.model.Order
+import java.time.format.DateTimeFormatter
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,9 +60,14 @@ import coil.compose.AsyncImage
 import com.rahul.grocer.ui.theme.DeepSpaceBlue
 import com.rahul.grocer.ui.theme.NebulaPurple
 import com.rahul.grocer.ui.theme.StarlightSilver
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onLogout: () -> Unit = {},
+    viewModel: ProfileViewModel = hiltViewModel()
+) {
+    val userState by viewModel.userState.collectAsState()
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     
     val singlePhotoPickerLauncher = rememberLauncherForActivityResult(
@@ -144,16 +157,85 @@ fun ProfileScreen() {
             Spacer(modifier = Modifier.height(40.dp))
 
             // User Details
-            ProfileItem(icon = Icons.Default.Person, label = "Name", value = "Rahul Kumar")
+            when (userState) {
+                is UserState.Loading -> {
+                    CircularProgressIndicator(
+                        color = NebulaPurple,
+                        modifier = Modifier.padding(32.dp)
+                    )
+                }
+                is UserState.Success -> {
+                    val user = (userState as UserState.Success).user
+                    ProfileItem(icon = Icons.Default.Person, label = "Name", value = user.fullName)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileItem(icon = Icons.Default.Email, label = "Email", value = user.email)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ProfileItem(icon = Icons.Default.Phone, label = "Phone", value = user.phone)
+                }
+                is UserState.Error -> {
+                    Text(
+                        text = (userState as UserState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Order History Section
+            Text(
+                text = "Order History",
+                style = MaterialTheme.typography.titleLarge,
+                color = StarlightSilver,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            
             Spacer(modifier = Modifier.height(16.dp))
-            ProfileItem(icon = Icons.Default.Email, label = "Email", value = "rahul@example.com")
-            Spacer(modifier = Modifier.height(16.dp))
-            ProfileItem(icon = Icons.Default.Phone, label = "Phone", value = "+91 98765 43210")
+
+            val pastOrders by viewModel.pastOrders.collectAsState()
+
+            if (pastOrders.isEmpty()) {
+                // Empty State
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = null,
+                        tint = StarlightSilver.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No orders yet",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = StarlightSilver.copy(alpha = 0.5f)
+                    )
+                }
+            } else {
+                // List of Orders
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().height(300.dp), // Limit height or use weight if full screen scroll is handled differently
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(pastOrders) { order ->
+                        OrderHistoryCard(order)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { /* Handle logout */ },
+                onClick = {
+                    viewModel.logout()
+                    onLogout()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

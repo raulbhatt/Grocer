@@ -23,8 +23,13 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     private fun loadData() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            // Artificial delay to show the cool Lottie animation
+            kotlinx.coroutines.delay(2000) 
+            
             val allProducts = MockData.getProducts()
             _uiState.value = HomeUiState(
+                isLoading = false,
                 greeting = "Good Evening, Alex",
                 smartListItems = allProducts.take(10), // First 10 for smart list
                 expressItems = allProducts.drop(10).take(5), // Next 5 for express
@@ -35,6 +40,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 }
 
 data class HomeUiState(
+    val isLoading: Boolean = true,
     val greeting: String = "Loading...",
     val smartListItems: List<Product> = emptyList(),
     val expressItems: List<Product> = emptyList(),
