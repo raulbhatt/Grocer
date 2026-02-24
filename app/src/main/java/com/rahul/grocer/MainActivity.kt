@@ -52,7 +52,7 @@ fun OrbitApp() {
 
     androidx.compose.material3.Scaffold(
         bottomBar = {
-            if (currentRoute != "onboarding" && currentRoute != "splash" && currentRoute != "login") {
+            if (currentRoute != "onboarding" && currentRoute != "splash" && currentRoute != "login" && currentRoute != "registration") {
                 OrbitBottomBar(navController, currentRoute)
             }
         },
@@ -78,6 +78,21 @@ fun OrbitApp() {
                         navController.navigate("home") {
                             popUpTo("login") { inclusive = true }
                         }
+                    },
+                    onNavigateToRegistration = {
+                        navController.navigate("registration")
+                    }
+                )
+            }
+            composable("registration") {
+                com.rahul.grocer.feature.registration.RegistrationScreen(
+                    onRegistrationSuccess = {
+                        navController.navigate("home") {
+                            popUpTo("registration") { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = {
+                        navController.popBackStack()
                     }
                 )
             }
@@ -110,7 +125,13 @@ fun OrbitApp() {
                 com.rahul.grocer.feature.ar.ZeroWasteScreen()
             }
             composable("profile") {
-                com.rahul.grocer.feature.profile.ProfileScreen()
+                com.rahul.grocer.feature.profile.ProfileScreen(
+                    onLogout = {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                )
             }
             composable("support") {
                 com.rahul.grocer.feature.support.SupportScreen(

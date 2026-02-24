@@ -1,5 +1,8 @@
 package com.rahul.grocer.feature.payment
 
+import GooglePayScreen
+import GooglePayViewModel
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -28,18 +31,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.wallet.AutoResolveHelper
 import com.rahul.grocer.ui.components.OrbitButton
 import com.rahul.grocer.ui.theme.DeepSpaceBlue
 import com.rahul.grocer.ui.theme.NebulaPurple
 import com.rahul.grocer.ui.theme.StarlightSilver
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.getValue
 
 enum class PaymentMethod(val title: String, val icon: ImageVector) {
     Card("Credit/Debit Card", Icons.Default.Lock), // Replaced CreditCard with Lock
     UPI("UPI", Icons.Default.Phone), // Replaced PhoneAndroid with Phone
+    GOOGLEPAY("Google Pay", Icons.Default.CheckCircle), // Google pay icon
     NetBanking("Net Banking", Icons.Default.Home), // Replaced AccountBalance with Home
     Wallet("Wallets", Icons.Default.Person), // Replaced AccountBalanceWallet with Person
     COD("Cash on Delivery", Icons.Default.Check) // Replaced Money with Check
@@ -57,6 +65,7 @@ fun PaymentSheet(
     var isPaymentSuccessful by remember { mutableStateOf(false) }
     var processingStep by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val viewModel: GooglePayViewModel = viewModel()
 
     AnimatedVisibility(
         visible = isVisible,
@@ -144,40 +153,75 @@ fun PaymentSheet(
                                 Spacer(modifier = Modifier.height(16.dp))
                                 // Selected Method Details
                                 AnimatedContent(targetState = selectedMethod, label = "PaymentDetails") { method ->
-                                    PaymentDetailsSection(method = method)
+                                    if (method != PaymentMethod.GOOGLEPAY) {
+                                        PaymentDetailsSection(method = method,viewModel=viewModel)
+                                    }
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        OrbitButton(
-                            text = "Pay $${String.format("%.2f", totalAmount)}",
-                            onClick = {
-                                isProcessing = true
-                                scope.launch {
-                                    // Simulation of Secure Gateway
-                                    processingStep = "Connecting to Secure Gateway..."
-                                    delay(1500)
-                                    processingStep = "Verifying Payment Details..."
-                                    delay(1500)
-                                    processingStep = "Running Fraud Checks..."
-                                    delay(2000)
-                                    processingStep = "Payment Approved!"
-                                    delay(1000)
-                                    isPaymentSuccessful = true
-                                    delay(3000) // Show confirmation for 3 seconds
-                                    onPaymentSuccess()
-                                    isProcessing = false
-                                    isPaymentSuccessful = false
+                        if (selectedMethod != PaymentMethod.GOOGLEPAY) {
+                            OrbitButton(
+                                text = "Pay $${String.format("%.2f", totalAmount)}",
+                                onClick = {
+                                    isProcessing = true
+                                    scope.launch {
+                                        // Simulation of Secure Gateway
+                                        processingStep = "Connecting to Secure Gateway..."
+                                        delay(1500)
+                                        processingStep = "Verifying Payment Details..."
+                                        delay(1500)
+                                        processingStep = "Running Fraud Checks..."
+                                        delay(2000)
+                                        processingStep = "Payment Approved!"
+                                        delay(1000)
+                                        isPaymentSuccessful = true
+                                        delay(3000) // Show confirmation for 3 seconds
+                                        onPaymentSuccess()
+                                        isProcessing = false
+                                        isPaymentSuccessful = false
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        } else {
+                            GooglePayScreen(
+                                viewModel = viewModel,
+                                onPayClicked = {
+                                    isProcessing = true
+                                    scope.launch {
+                                        // Simulation of Secure Gateway
+                                        processingStep = "Connecting to Secure Gateway..."
+                                        delay(1500)
+                                        processingStep = "Verifying Payment Details..."
+                                        delay(1500)
+                                        processingStep = "Running Fraud Checks..."
+                                        delay(2000)
+                                        processingStep = "Payment Approved!"
+                                        delay(1000)
+                                        isPaymentSuccessful = true
+                                        delay(3000) // Show confirmation for 3 seconds
+                                        onPaymentSuccess()
+                                        isProcessing = false
+                                        isPaymentSuccessful = false
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun requestPayment() {
+    // Price would usually be determined by selected items
+    val priceCents = 1000L // $10.00
+    //val task = viewModel().getLoadPaymentDataTask(priceCents)
+    //AutoResolveHelper.resolveTask(task, this, LOAD_PAYMENT_DATA_REQUEST_CODE)
 }
 
 @Composable
@@ -220,7 +264,7 @@ fun PaymentMethodItem(
 }
 
 @Composable
-fun PaymentDetailsSection(method: PaymentMethod) {
+fun PaymentDetailsSection(method: PaymentMethod,viewModel :GooglePayViewModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -295,6 +339,7 @@ fun PaymentDetailsSection(method: PaymentMethod) {
             PaymentMethod.COD -> {
                 Text("Pay cash upon delivery. Please keep exact change ready.", color = StarlightSilver)
             }
+            else -> {}
         }
     }
 }
@@ -352,7 +397,7 @@ fun OrderConfirmedScreen() {
             text = "Your order will be at your doorstep soon",
             style = MaterialTheme.typography.bodyLarge,
             color = StarlightSilver,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
     }
 }
